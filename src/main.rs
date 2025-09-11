@@ -29,8 +29,31 @@ impl LibinputInterface for Interface {
 }
 
 fn main() {
-    let device_path = "/dev/input/event5"; // Change this to your device path
-    let wav_path = "/home/ackle/bin/nubmoan/moanswav"; // Change this to your WAV files path
+    let args = std::env::args().collect::<Vec<_>>();
+
+    let device_path = args.get(1).unwrap_or_else(|| {
+        println!("No device path provided.");
+        std::process::exit(1);
+    });
+    let wav_path = args.get(2).unwrap_or_else(|| {
+        println!("No WAV path provided.");
+        std::process::exit(1);
+    });
+
+    if !std::fs::exists(device_path).unwrap_or(false) {
+        println!("Device path does not exist.");
+        std::process::exit(1);
+    }
+    if !std::fs::exists(wav_path).unwrap_or(false) {
+        println!("WAV path does not exist.");
+        std::process::exit(1);
+    }
+    for i in 1..=10 {
+        if !std::fs::exists(format!("{}/{}.wav", wav_path, i)).unwrap_or(false) {
+            println!("WAV file {}/{}.wav does not exist.", wav_path, i);
+            std::process::exit(1);
+        }
+    }
 
     let mut input = Libinput::new_from_path(Interface);
     println!("Using device: {}", device_path);
@@ -80,6 +103,18 @@ fn main() {
                 //     continue;
                 // }
 
+                // Check if current sound is still playing
+                let can_play_new_sound = current_handle
+                    .as_ref()
+                    .map(|handle: &kira::sound::static_sound::StaticSoundHandle| {
+                        !handle.state().eq(&PlaybackState::Playing)
+                    })
+                    .unwrap_or(true);
+
+                if !can_play_new_sound {
+                    continue;
+                }
+
                 let ev_ptr = event.as_raw();
 
                 let dx = libinput_event_pointer_get_dx(ev_ptr as *mut libinput_event_pointer);
@@ -110,21 +145,12 @@ fn main() {
                 println!("Speed: {}", speed);
 
                 // play the selected audio file
-                // Check if current sound is still playing
-                let can_play_new_sound = current_handle
-                    .as_ref()
-                    .map(|handle: &kira::sound::static_sound::StaticSoundHandle| {
-                        !handle.state().eq(&PlaybackState::Playing)
-                    })
-                    .unwrap_or(true);
 
-                if can_play_new_sound {
-                    // play the selected audio file
-                    let handle = manager
-                        .play(sound_data[speed as usize - 1].clone())
-                        .expect("Failed to play sound");
-                    current_handle = Some(handle);
-                }
+                // play the selected audio file
+                let handle = manager
+                    .play(sound_data[speed as usize - 1].clone())
+                    .expect("Failed to play sound");
+                current_handle = Some(handle);
 
                 // while handle.state().eq(&PlaybackState::Playing) {
                 //     std::thread::sleep(Duration::from_millis(10));
