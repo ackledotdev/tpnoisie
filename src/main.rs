@@ -66,6 +66,9 @@ fn main() {
     }
 
     println!("Starting input dispatch loop");
+
+    let mut current_handle = None;
+
     while running.load(Ordering::SeqCst) {
         input.dispatch().expect("Failed to dispatch input");
         for event in &mut input {
@@ -95,21 +98,42 @@ fn main() {
                     .trunc() as i64;
 
                 // just in case
-                if speed <= 0 || speed > 10 {
+                if speed > 10 {
                     println!("Random speed next; original: {}", speed);
                     speed = rand::random_range(5..=8) as i64;
+                }
+
+                if speed <= 0 {
+                    continue;
                 }
 
                 println!("Speed: {}", speed);
 
                 // play the selected audio file
-                let handle = manager
-                    .play(sound_data[speed as usize - 1].clone())
-                    .expect("Failed to play sound");
-                while handle.state().eq(&PlaybackState::Playing) {
-                    std::thread::sleep(Duration::from_millis(10));
+                // Check if current sound is still playing
+                let can_play_new_sound = current_handle
+                    .as_ref()
+                    .map(|handle: &kira::sound::static_sound::StaticSoundHandle| {
+                        !handle.state().eq(&PlaybackState::Playing)
+                    })
+                    .unwrap_or(true);
+
+                if can_play_new_sound {
+                    // play the selected audio file
+                    let handle = manager
+                        .play(sound_data[speed as usize - 1].clone())
+                        .expect("Failed to play sound");
+                    current_handle = Some(handle);
                 }
+
+                // while handle.state().eq(&PlaybackState::Playing) {
+                //     std::thread::sleep(Duration::from_millis(10));
+                // }
+
+                break;
             }
         }
+
+        std::thread::sleep(Duration::from_millis(10));
     }
 }
