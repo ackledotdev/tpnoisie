@@ -1,0 +1,7 @@
+# tpnoisie
+
+Make the ThinkPad TrackPoint make noises
+
+## Functionality
+
+The program reads the TrackPoint displacement data from the provided device file (e.g., `/dev/input/eventX`) and generates sound based on the movement intensity. `libinput` is used to read the input events. Compiling may require `libinput-devel` or equivalent.
