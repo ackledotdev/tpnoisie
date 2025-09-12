@@ -33,7 +33,9 @@ fn main() {
 
     let device_path = args.get(1).unwrap_or_else(|| {
         println!("No device path provided.");
-        std::process::exit(1);
+        println!("Scanning for input devices...");
+        scan_print_input_devices();
+        std::process::exit(2);
     });
     let wav_path = args.get(2).unwrap_or_else(|| {
         println!("No WAV path provided.");
@@ -162,4 +164,15 @@ fn main() {
 
         std::thread::sleep(Duration::from_millis(10));
     }
+}
+
+fn scan_print_input_devices() {
+    let mut table = vec!["Device Name\tDevice Path".to_string()];
+    let devs = evdev::enumerate();
+    for dev in devs {
+        let path = dev.0.as_path().to_str().expect("Failed to convert path");
+        let name = dev.1.name().unwrap_or("Unknown device");
+        table.push(format!("{}\t{}", name, path));
+    }
+    format_table::format_table(table);
 }
