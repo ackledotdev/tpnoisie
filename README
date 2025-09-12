@@ -18,3 +18,11 @@ cargo install --git https://github.com/ackledotdev/tpnoisie.git
 tpnoisie # find TrackPoint, trackpad, or other pointer device location (e.g. /dev/input/eventX)
 tpnoisie /dev/input/eventX /path/to/wavsounds/
 ```
+
+### Systemd Service
+
+A systemd user unit file is provided in [`tpnoisie.service`](./tpnoisie.service). It should be copied to `~/.config/systemd/user/tpnoisie.service`. You may need to adjust the `ExecStart` path, device path, and sound directory.
+
+```bash
+systemctl --user enable --now tpnoisie.service
+```
