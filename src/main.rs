@@ -45,12 +45,12 @@ fn main() {
         std::process::exit(1);
     }
     if !std::fs::exists(wav_path).unwrap_or(false) {
-        println!("WAV path does not exist.");
+        println!("WAV directory does not exist.");
         std::process::exit(1);
     }
-    for i in 1..=10 {
+    for i in 0..=9 {
         if !std::fs::exists(format!("{}/{}.wav", wav_path, i)).unwrap_or(false) {
-            println!("WAV file {}/{}.wav does not exist.", wav_path, i);
+            println!("WAV file {wav_path}/{i}.wav does not exist.");
             std::process::exit(1);
         }
     }
@@ -67,9 +67,9 @@ fn main() {
         .expect("Failed to create audio manager");
     let mut sound_data = Vec::new();
     // load sounds
-    for i in 1..=10 {
+    for i in 0..=9 {
         sound_data.push(
-            StaticSoundData::from_file(&format!("{}/{}.wav", wav_path, i))
+            StaticSoundData::from_file(&format!("{wav_path}/{i}.wav"))
                 .expect("Failed to load sound"),
         );
     }
