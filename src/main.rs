@@ -137,7 +137,7 @@ fn main() {
                 // just in case
                 if speed > 10 {
                     println!("Random speed next; original: {}", speed);
-                    speed = rand::random_range(5..=8) as i64;
+                    speed = rand::random_range(7..=9) as i64;
                 }
 
                 if speed <= 0 {
