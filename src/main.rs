@@ -29,6 +29,8 @@ impl LibinputInterface for Interface {
 }
 
 fn main() {
+    let multiplier = 6.0;
+
     let args = std::env::args().collect::<Vec<_>>();
 
     let device_path = args.get(1).unwrap_or_else(|| {
@@ -122,25 +124,23 @@ fn main() {
                 let dx = libinput_event_pointer_get_dx(ev_ptr as *mut libinput_event_pointer);
                 let dy = libinput_event_pointer_get_dy(ev_ptr as *mut libinput_event_pointer);
 
-                let threshold = 0.1;
+                let threshold = 0.0;
 
                 if dx <= threshold && dy <= threshold {
                     continue;
                 }
 
                 // use pythagorean theorem and log scale to obtain a scaled magnitude of velocity
-                let mut speed = (((dx * dx + dy * dy) * 6.0 as f64).sqrt())
-                    .log2()
-                    .abs()
-                    .trunc() as i64;
+                let mut speed = ((dx * dx + dy * dy) * multiplier as f64)
+                    .sqrt()
+                    .log(1.8)
+                    .clamp(1.0, 10.0) as i8;
 
                 // just in case
                 if speed > 10 {
                     println!("Random speed next; original: {}", speed);
-                    speed = rand::random_range(7..=9) as i64;
-                }
-
-                if speed <= 0 {
+                    speed = rand::random_range(7..=9);
+                } else if speed <= 0 {
                     continue;
                 }
 
@@ -153,12 +153,6 @@ fn main() {
                     .play(sound_data[speed as usize - 1].clone())
                     .expect("Failed to play sound");
                 current_handle = Some(handle);
-
-                // while handle.state().eq(&PlaybackState::Playing) {
-                //     std::thread::sleep(Duration::from_millis(10));
-                // }
-
-                break;
             }
         }
 
