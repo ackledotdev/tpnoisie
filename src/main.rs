@@ -37,10 +37,10 @@ fn main() {
         println!("No device path provided.");
         println!("Scanning for input devices...");
         scan_print_input_devices();
-        std::process::exit(2);
+        std::process::exit(0);
     });
-    let wav_path = args.get(2).unwrap_or_else(|| {
-        println!("No WAV path provided.");
+    let audio_path = args.get(2).unwrap_or_else(|| {
+        println!("No audio path provided.");
         std::process::exit(1);
     });
 
@@ -48,13 +48,24 @@ fn main() {
         println!("Device path does not exist.");
         std::process::exit(1);
     }
-    if !std::fs::exists(wav_path).unwrap_or(false) {
-        println!("WAV directory does not exist.");
+    if !std::fs::exists(audio_path).unwrap_or(false) {
+        println!("Audio directory does not exist.");
         std::process::exit(1);
     }
+
+    let audio_type = args.get(3).unwrap_or(&"wav".to_string()).to_lowercase();
+
+    if audio_type != "wav" && audio_type != "ogg" {
+        println!(
+            "Unsupported audio type: {}. Only 'wav' and 'ogg' are supported.",
+            audio_type
+        );
+        std::process::exit(1);
+    }
+
     for i in 0..=9 {
-        if !std::fs::exists(format!("{}/{}.wav", wav_path, i)).unwrap_or(false) {
-            println!("WAV file {wav_path}/{i}.wav does not exist.");
+        if !std::fs::exists(format!("{}/{}.{}", audio_path, i, audio_type)).unwrap_or(false) {
+            println!("Audio file {audio_path}/{i}.{audio_type} does not exist.");
             std::process::exit(1);
         }
     }
@@ -65,7 +76,7 @@ fn main() {
         .path_add_device(device_path)
         .expect("Failed to add hardware device");
 
-    println!("Loading sounds from {}", wav_path);
+    println!("Loading sounds from {}", audio_path);
     // Create an audio manager. This plays sounds and manages resources.
     let mut manager = AudioManager::<DefaultBackend>::new(AudioManagerSettings::default())
         .expect("Failed to create audio manager");
@@ -73,7 +84,7 @@ fn main() {
     // load sounds
     for i in 0..=9 {
         sound_data.push(
-            StaticSoundData::from_file(&format!("{wav_path}/{i}.wav"))
+            StaticSoundData::from_file(&format!("{audio_path}/{i}.{audio_type}"))
                 .expect("Failed to load sound"),
         );
     }
@@ -108,14 +119,13 @@ fn main() {
                 // }
 
                 // Check if current sound is still playing
-                let can_play_new_sound = current_handle
+                if !current_handle
                     .as_ref()
                     .map(|handle: &kira::sound::static_sound::StaticSoundHandle| {
                         !handle.state().eq(&PlaybackState::Playing)
                     })
-                    .unwrap_or(true);
-
-                if !can_play_new_sound {
+                    .unwrap_or(true)
+                {
                     continue;
                 }
 
@@ -134,19 +144,32 @@ fn main() {
                 let mut speed = ((dx * dx + dy * dy) * multiplier as f64)
                     .sqrt()
                     .log(1.8)
-                    .clamp(1.0, 10.0) as i8;
+                    // let the speed go over 10 so random sounds can be triggered
+                    .clamp(1.0, 12.0) as i8;
 
-                // just in case
+                let raw_speed = speed;
+
+                // choose randomly if speed is over 10
                 if speed > 10 {
                     println!("Random speed next; original: {}", speed);
-                    speed = rand::random_range(7..=9);
+                    speed = rand::random_range(6..=10);
                 } else if speed <= 0 {
                     continue;
+                } else if speed == 1 {
+                    // to avoid too many speed 1 sounds, sometimes pick 2 or 3 instead
+                    let roll: f64 = rand::random();
+                    if roll < 0.3 {
+                        speed = 2;
+                    } else if roll < 0.5 {
+                        speed = 3;
+                    }
                 }
 
-                println!("Speed: {}", speed);
-
-                // play the selected audio file
+                if speed == raw_speed {
+                    println!("Speed: {}", speed);
+                } else {
+                    println!("Speed: {} (Raw {})", speed, raw_speed);
+                }
 
                 // play the selected audio file
                 let handle = manager
@@ -161,12 +184,21 @@ fn main() {
 }
 
 fn scan_print_input_devices() {
-    let mut table = vec!["Device Name\tDevice Path".to_string()];
+    let mut table = vec!["TrackPoint?\tDevice Name\tDevice Path".to_string()];
     let devs = evdev::enumerate();
     for dev in devs {
         let path = dev.0.as_path().to_str().expect("Failed to convert path");
         let name = dev.1.name().unwrap_or("Unknown device");
-        table.push(format!("{}\t{}", name, path));
+        table.push(format!(
+            "{}\t{}\t{}",
+            if name.to_lowercase().contains("trackpoint") {
+                "XXXXXXXXXXX"
+            } else {
+                " "
+            },
+            name,
+            path
+        ));
     }
     format_table::format_table(table);
 }
