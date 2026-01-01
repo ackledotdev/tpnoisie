@@ -3,7 +3,7 @@ Description=tpnoisie - ThinkPad TrackPoint noise maker
 After=default.target
 
 [Service]
-ExecStart=/home/user/.cargo/bin/tpnoisie /dev/input/eventX ~/wavsounds/directory/
+ExecStart=/home/user/.cargo/bin/tpnoisie auto ~/sounds/directory/ ogg
 Restart=on-failure
 
 [Install]

@@ -33,7 +33,7 @@ fn main() {
 
     let args = std::env::args().collect::<Vec<_>>();
 
-    let device_path = args.get(1).unwrap_or_else(|| {
+    let device_path_supplied = args.get(1).unwrap_or_else(|| {
         println!("No device path provided.");
         println!("Scanning for input devices...");
         scan_print_input_devices();
@@ -44,7 +44,32 @@ fn main() {
         std::process::exit(1);
     });
 
-    if !std::fs::exists(device_path).unwrap_or(false) {
+    let devices = evdev::enumerate();
+    let mut device_path = String::new();
+    if device_path_supplied == "auto" {
+        println!("Auto-detecting TrackPoint device...");
+        let mut found = false;
+        for dev in devices {
+            let name = dev.1.name().unwrap_or("Unknown device");
+            let devpath = dev.0.as_path().to_str().clone();
+            if name.to_lowercase().contains("trackpoint") {
+                device_path = devpath
+                    .expect(&format!("Failed to convert path for device {}", name))
+                    .to_string();
+                println!("Auto-detected TrackPoint device: {}", device_path);
+                found = true;
+                break;
+            }
+        }
+        if !found {
+            println!("No TrackPoint device found.");
+            std::process::exit(1);
+        }
+    } else {
+        device_path = device_path_supplied.to_string();
+    }
+
+    if !std::fs::exists(&device_path).unwrap_or(false) {
         println!("Device path does not exist.");
         std::process::exit(1);
     }
@@ -73,7 +98,7 @@ fn main() {
     let mut input = Libinput::new_from_path(Interface);
     println!("Using device: {}", device_path);
     let _device = input
-        .path_add_device(device_path)
+        .path_add_device(device_path.as_str())
         .expect("Failed to add hardware device");
 
     println!("Loading sounds from {}", audio_path);

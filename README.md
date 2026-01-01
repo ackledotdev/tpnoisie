@@ -6,17 +6,37 @@ Make the ThinkPad TrackPoint make noises
 
 The program reads the TrackPoint displacement data from the provided device file (e.g., `/dev/input/eventX`) and generates sound based on the movement intensity. `libinput` is used to read the input events. Compiling may require `libinput-devel` or equivalent.
 
-## Installation & Usage
+## Installation
 
-Pre-requisites: Rust and `libinput-devel` or equivalent installed, and sounds configured as follows:
+### From source
 
-Some directory `/path/to/wavsounds/` containing 10 WAV files named exactly `{0..9}.wav` representing increasing intensity levels.
+Build requirements: `libinput-devel` or equivalent installed.
 
 ```bash
-# libinput-devel or similar may be required
 cargo install --git https://github.com/ackledotdev/tpnoisie.git
+```
+
+### From the AUR
+
+AUR package upcoming.
+
+### From GitHub Releases
+
+Precompiled binaries are available on the Releases page.
+
+## Usage
+
+Runtime requirements: Some directory `/path/to/sounds/` containing 10 files named exactly `{0..9}.{EXT}` where `{EXT}` is either `wav` or `ogg`, representing increasing intensity levels.
+
+```bash
 tpnoisie # find TrackPoint, trackpad, or other pointer device location (e.g. /dev/input/eventX)
-tpnoisie /dev/input/eventX /path/to/wavsounds/
+tpnoisie /dev/input/eventX /path/to/sounds/ {EXT} # e.g. wav or ogg
+```
+
+Alternatively, specify `auto` for the device path to have the program automatically find the first TrackPoint device.
+
+```bash
+tpnoisie auto /path/to/sounds/ {EXT}
 ```
 
 ### Systemd Service
