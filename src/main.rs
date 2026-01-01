@@ -29,6 +29,9 @@ impl LibinputInterface for Interface {
 }
 
 fn main() {
+    let version = "0.3.1";
+    println!("tpnoisie v{}", version);
+
     let multiplier = 6.0;
 
     let args = std::env::args().collect::<Vec<_>>();
