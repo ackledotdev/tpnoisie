@@ -18,7 +18,11 @@ cargo install --git https://github.com/ackledotdev/tpnoisie.git
 
 ### From the AUR
 
-AUR package upcoming.
+```bash
+paru -S tpnoisie
+# or
+yay -S tpnoisie
+```
 
 ### From GitHub Releases
 
