@@ -2,9 +2,9 @@ use input::ffi::{
     libinput_event_pointer, libinput_event_pointer_get_dx, libinput_event_pointer_get_dy,
 };
 use input::{AsRaw, Libinput, LibinputInterface};
-use kira::sound::PlaybackState;
 use kira::{
-    AudioManager, AudioManagerSettings, DefaultBackend, sound::static_sound::StaticSoundData,
+    AudioManager, AudioManagerSettings, DefaultBackend, sound::PlaybackState,
+    sound::static_sound::StaticSoundData,
 };
 use libc::{O_RDONLY, O_RDWR, O_WRONLY};
 use std::fs::{File, OpenOptions};
@@ -33,6 +33,8 @@ fn main() {
     println!("tpnoisie v{}", version);
 
     let multiplier = 6.0;
+
+    let volume_adjustment: f32 = -96.0;
 
     let args = std::env::args().collect::<Vec<_>>();
 
@@ -113,7 +115,8 @@ fn main() {
     for i in 0..=9 {
         sound_data.push(
             StaticSoundData::from_file(&format!("{audio_path}/{i}.{audio_type}"))
-                .expect("Failed to load sound"),
+                .expect("Failed to load sound")
+                .volume(volume_adjustment),
         );
     }
 
