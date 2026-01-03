@@ -29,7 +29,7 @@ impl LibinputInterface for Interface {
 }
 
 fn main() {
-    let version = "0.3.1";
+    let version = "0.3.2";
     println!("tpnoisie v{}", version);
 
     let multiplier = 6.0;
